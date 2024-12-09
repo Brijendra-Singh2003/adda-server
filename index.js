@@ -132,6 +132,7 @@ app.use(express.json());
 
 // Routes
 // app.use("/api/auth", AuthRouter);
+const HOST = process.env.HOST;
 
 // to server client side build files
 app.use(express.static(path.join(process.cwd(), "..", "client/dist")));
@@ -144,7 +145,7 @@ async function main() {
   createWSS(server);
   await connectDb();
 
-  server.listen(3000, () => {
+  server.listen(3000, HOST, () => {
     console.log("http://localhost:3000");
   });
 }
