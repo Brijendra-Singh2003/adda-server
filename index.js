@@ -112,22 +112,6 @@ app.get("/logOut", (req, res) => {
   });
 });
 
-// app.use(
-//   session({
-//     secret: "123", // Use a secure key in production
-//     resave: false, // Prevent resaving unmodified sessions
-//     saveUninitialized: false, // Don’t save empty sessions
-//     store: MongoStore.create({
-//       mongoUrl:
-//         "mongodb+srv://brijendra:FCVY928u6kHpguiz@cluster0.kipuqkw.mongodb.net/Ripitt",
-//     }), // Optional: Store sessions in MongoDB
-//     cookie: {
-//       maxAge: 24 * 60 * 60 * 1000, // Session expiration in milliseconds (1 day)
-//       secure: false, // Set to true in production with HTTPS
-//       httpOnly: true, // Helps prevent XSS
-//     },
-//   })
-// );
 app.use(express.json());
 
 // Routes
