@@ -9,6 +9,7 @@ const connectDb = require("./configuration/db");
 const cors = require("cors");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
+const sessionMiddleware = require("./controller/session");
 const app = express();
 const corsOptions = {
   origin: "http://localhost:5173",
@@ -17,22 +18,8 @@ const corsOptions = {
 const passport = require("passport");
 
 //middleware
-
-app.use(
-  session({
-    secret: "123",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: false, // Set to true if using HTTPS
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
-      httpOnly: true,
-    },
-    store: MongoStore.create({
-      mongoUrl: process.env.DATABASE_URL,
-    }),
-  })
-);
+let name = "user";
+app.use(sessionMiddleware);
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -56,6 +43,7 @@ passport.use(
           });
         }
         console.log("user is ", user);
+
         return done(null, user);
       } catch (err) {
         return done(err, null);
@@ -89,6 +77,7 @@ app.get(
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
     // console.log("User authenticated:", req.user);
+    name = req.user;
     res.redirect("http://localhost:5173");
   }
 );
@@ -126,10 +115,11 @@ app.get("*", (req, res) => {
 
 async function main() {
   const server = http.createServer(app);
-  createWSS(server);
+  console.log("n:", name);
+  createWSS(server, name);
   await connectDb();
 
-  server.listen(3000, HOST, () => {
+  server.listen(3000, () => {
     console.log("http://localhost:3000");
   });
 }
