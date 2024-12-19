@@ -2,54 +2,53 @@ const ws = require("ws");
 
 function createWSS(server) {
   const wss = new ws.Server({ server });
-
   let count = 1;
-  const devices = [];
+  let room = [];
+
+  room.push({ username: "chintu", posi: { x: 50, y: 100, vx: 0, vy: 0 } });
+  room.push({ username: "mintu", posi: { x: 150, y: 100, vx: 0, vy: 0 } });
+
 
   wss.on("connection", (socket) => {
     const id = count++;
-    devices.push(id);
-    console.log(`device ${id} connected.`, devices);
+    let myUsername;
 
-    socket.send(JSON.stringify({ id }));
-
-    devices.forEach((device) => {
-      if (device !== id) socket.send(JSON.stringify({ connection: device }));
-    });
-
-    wss.clients.forEach((client) => {
-      if (client !== socket) client.send(JSON.stringify({ connection: id }));
-    });
+    console.log(`device ${id} connected.`, room);
 
     socket.on("message", (data, isBinary) => {
-      wss.clients.forEach((client) => {
-        if (client !== socket) {
-          client.send(data, { binary: isBinary });
-        }
-      });
+      const message = JSON.parse(data.toString());
 
-      // const message = JSON.parse(data.toString());
-      // console.log("Received message: ", data.toString());
+
+
+      if (message.type === "init") {
+        myUsername = message.data.username;
+        room.push({ username: myUsername, x: 20, y: 20, vx: 0, vy: 0 });
+      }
+      else if (message.type === "move") {
+        for (const player of room) {
+          if (player.username === myUsername) {
+            player.posi = message.data.posi;
+            break;
+          }
+        }
+        // room[myUsername] = message.data;
+      }
     });
 
     socket.on("close", () => {
-      for (let i = 0; i < devices.length; i++) {
-        if (devices[i] === id) {
-          devices[i] = devices[devices.length - 1];
-          devices.pop();
-          break;
-        }
-      }
 
-      console.log(`device ${id} disconnected.`, devices);
-
-      wss.clients.forEach((client) => {
-        if (client !== socket) {
-          client.send(JSON.stringify({ close: id }));
-        }
-      });
+      room = room.filter((e)=> (e.username !== myUsername));
+      console.log(`device ${id} disconnected.`, room);
     });
   });
+
+
+
+  setInterval(() => {
+    for (const client of wss.clients) {
+      client.send(JSON.stringify({ type: "update", data: room }));
+    }
+  }, 100);
 }
 
 module.exports = { createWSS };

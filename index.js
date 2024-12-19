@@ -9,9 +9,11 @@ const connectDb = require("./configuration/db");
 const cors = require("cors");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
+
 const app = express();
+
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
   credentials: true,
 };
 const passport = require("passport");
@@ -37,7 +39,9 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(cors(corsOptions));
+
 var GoogleStrategy = require("passport-google-oauth20").Strategy;
+
 passport.use(
   new GoogleStrategy(
     {
@@ -65,14 +69,12 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => {
-  // console.log("start", user.id);
   done(null, user.id);
 });
+
 passport.deserializeUser(async (id, done) => {
   try {
-    // console.log("call des");
     const user = await User.findById(id);
-    // console.log(user);
     done(null, user);
   } catch (err) {
     done(err, null);
@@ -83,19 +85,17 @@ app.get(
   "/auth/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
+
 // google 0auth callBack
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
-    // console.log("User authenticated:", req.user);
-    res.redirect("http://localhost:5173");
+    res.redirect(process.env.FRONTEND_URL);
   }
 );
 
 app.get("/check-session", async (req, res) => {
-  // console.log("call check dsession");
-  // console.log(req.user);
   if (req.isAuthenticated()) {
     res.json({ user: req.user });
   } else {
@@ -108,7 +108,7 @@ app.get("/logOut", (req, res) => {
     if (err) {
       res.status(500).json({ error: "logout failed" });
     }
-    res.redirect("http://localhost:5173");
+    res.redirect(process.env.FRONTEND_URL);
   });
 });
 
@@ -125,11 +125,12 @@ app.get("*", (req, res) => {
 });
 
 async function main() {
-  const server = http.createServer(app);
-  createWSS(server);
   await connectDb();
 
-  server.listen(3000, HOST, () => {
+  const server = http.createServer(app);
+  createWSS(server);
+
+  server.listen(3000, () => {
     console.log("http://localhost:3000");
   });
 }
