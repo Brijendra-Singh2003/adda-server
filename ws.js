@@ -24,6 +24,7 @@ function createWSS(server) {
     let myUsername;
 
     console.log(`device ${id} connected.`, room);
+    socket.send(JSON.stringify({type:"messages",data:chats}));
 
     socket.on("message", (data, isBinary) => {
       const message = JSON.parse(data.toString());
