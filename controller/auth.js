@@ -1,31 +1,22 @@
-const User = require("../model/user.model.js");
-const passport = require("passport");
-var GoogleStrategy = require("passport-google-oauth20").Strategy;
-// passport.use(
-//   new GoogleStrategy(
-//     {
-//       clientID: String(process.env.CLIENTID),
-//       clientSecret: String(process.env.CLIENT_SECRET),
-//       callbackURL: "http://localhost:3000/auth/google/callback",
-//     },
-//     function (accessToken, refreshToken, profile, cb) {
-//       User.findOrCreate({ googleId: profile.id }, function (err, user) {
-//         return cb(err, user);
-//       });
-//     }
-//   )
-// );
-const signUp = async (req, res) => {
-  // passport.authenticate("google", { scope: ["profile"] });
+const logIn = async (req, res) => {
+  res.redirect(process.env.FRONTEND_URL);
 };
 
-const logIn = async (req, res) => {
-  // passport.authenticate("google", { failureRedirect: "/login" }),
-  //   function (req, res) {
-  //     // Successful authentication, redirect home.
-  //     res.redirect("/");
-  //   };
+const checkSession = async (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({ user: req.user });
+  } else {
+    res.status(401).json({ error: "unAutherized user" });
+  }
 };
-const checkSession = async (req, res) => {};
-const logOut = async (req, res) => {};
-module.exports = { signUp, checkSession, logOut, logIn };
+
+const logOut = async (req, res) => {
+  req.logOut((err) => {
+    if (err) {
+      res.status(500).json({ error: "logout failed" });
+    }
+    res.redirect(process.env.FRONTEND_URL);
+  });
+};
+
+module.exports = { checkSession, logOut, logIn };

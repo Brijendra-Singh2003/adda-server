@@ -1,10 +1,12 @@
 const express = require("express");
-const { signUp, checkSession, logOut, logIn } = require("../controller/auth");
+const passport = require("../configuration/passport");
+const { checkSession, logOut, logIn } = require("../controller/auth");
+
 const AuthRouter = express.Router();
 
-AuthRouter.get("/auth/google", signUp);
-AuthRouter.get("/auth/google/callback", logIn);
-AuthRouter.get("/", checkSession);
+AuthRouter.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+AuthRouter.get("/google/callback", passport.authenticate("google", { failureRedirect: "/login" }), logIn);
+AuthRouter.get("/check-session", checkSession);
 AuthRouter.get("/logout", logOut);
 
-module.exports = AuthRouter; // Use CommonJS export
+module.exports = AuthRouter;
