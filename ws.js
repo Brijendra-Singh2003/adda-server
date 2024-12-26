@@ -3,6 +3,7 @@ const ws = require("ws");
 function createWSS(server) {
   const wss = new ws.Server({ server });
   const room = [];
+  const MESSAGE_LIMIT = 10;
   let count = 1;
   let messageId = 4;
   const chats = [
@@ -51,7 +52,11 @@ function createWSS(server) {
             text: message.data,
           });
 
-          console.log("chats", ...chats);
+          if(chats.length > MESSAGE_LIMIT) {
+            chats.shift();
+          }
+
+          console.log("new message: ", chats.at(-1));
 
           wss.clients.forEach(client=>{
             client.send(JSON.stringify({type:"messages",data:chats}));
