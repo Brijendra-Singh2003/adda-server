@@ -3,6 +3,7 @@ const ws = require("ws");
 function createWSS(server) {
   const wss = new ws.Server({ server });
   const room = [];
+  const MESSAGE_LIMIT = 10;
   let count = 1;
   let messageId = 4;
   const map = {
@@ -37,6 +38,7 @@ function createWSS(server) {
     let myUsername;
 
     console.log(`device ${id} connected.`, room);
+    socket.send(JSON.stringify({ type: "messages", data: chats }));
 
     socket.on("message", (data, isBinary) => {
       const message = JSON.parse(data.toString());
@@ -88,6 +90,10 @@ function createWSS(server) {
             sender: myUsername,
             text: message.data.text,
           });
+
+          if (chats[currRoom].length > MESSAGE_LIMIT) {
+            chats[currRoom].shift();
+          }
 
           console.log("after ", chats[currRoom]);
           socket.send(
