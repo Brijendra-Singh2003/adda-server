@@ -1,7 +1,7 @@
 const passport = require("passport");
 const User = require("../model/user.model");
 const { Strategy } = require("passport-google-oauth20");
-
+let count = 0;
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3000";
 const googleStrategy = new Strategy(
   {
@@ -11,11 +11,13 @@ const googleStrategy = new Strategy(
   },
   async function (accessToken, refreshToken, profile, done) {
     try {
+      count++;
       let user = await User.findOne({ googleId: profile.id });
       if (!user) {
         user = await User.create({
           googleId: profile.id,
           name: profile.displayName,
+          name: count,
           email: profile.emails[0].value,
         });
       }
@@ -26,7 +28,7 @@ const googleStrategy = new Strategy(
       return done(err, null);
     }
   }
-)
+);
 
 passport.use(googleStrategy);
 

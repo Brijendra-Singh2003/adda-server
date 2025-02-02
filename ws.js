@@ -11,6 +11,7 @@ function createWSS(server) {
     fountain: new Set(),
   };
 
+  const clients = new Map();
   const chats = {
     table: [
       { id: 1, text: "Hello! How can I help you today?", sender: "chintu" },
@@ -75,9 +76,15 @@ function createWSS(server) {
           currRoom = message.data.room;
           console.log("exit from  in ", message);
           map[currRoom].delete(socket);
-          // socket.send(
-          //   JSON.stringify({ type: "messages", data: chats[currRoom] })
-          // );
+
+          console.log(myUsername);
+          Array.from(clients.keys()).forEach((clientId) => {
+            clients
+              .get(clientId)
+              .send(JSON.stringify({ type: "exitRoom", data: myUsername }));
+          });
+          clients.delete(myUsername);
+
           break;
 
         case "messages":
@@ -108,6 +115,66 @@ function createWSS(server) {
           //   );
           // });
           break;
+        case "join":
+          const users = room.map((e) => e.username);
+          console.log("users are", users);
+
+          socket.send(
+            JSON.stringify({
+              type: "clients",
+              data: Array.from(clients.keys()) || [],
+            })
+          );
+          clients.set(myUsername, socket);
+          console.log(clients.keys());
+          break;
+        case "offer":
+          // console.log(message);
+          const receiver = clients.get(message.receiverId);
+          console.log(
+            `recieving offer from ${myUsername} to ${message.receiverId}`
+          );
+          if (receiver) {
+            receiver.send(
+              JSON.stringify({
+                type: "offer",
+                data: message.data,
+                senderId: myUsername,
+              })
+            );
+          } else {
+            console.error(`Receiver ${receiver} not found`);
+          }
+          break;
+        case "answer": {
+          const receiver = clients.get(message.receiverId);
+          console.log("answer recieve ", message.receiverId);
+          if (receiver) {
+            receiver.send(
+              JSON.stringify({
+                type: "answer",
+                data: message.data,
+                senderId: myUsername,
+              })
+            );
+          } else {
+            console.error(`Receiver ${message.receiverId} not found`);
+          }
+          break;
+        }
+
+        default: {
+          const receiver = clients.get(message.receiverId);
+
+          receiver.send(
+            JSON.stringify({
+              type: message.type,
+              data: message.data,
+              senderId: myUsername,
+            })
+          );
+          break;
+        }
       }
     });
 
@@ -119,6 +186,7 @@ function createWSS(server) {
           break;
         }
       }
+      clients.clear();
 
       // room = room.filter((e) => (e.username !== myUsername));
       console.log(`device ${id} disconnected.`, room);

@@ -15,7 +15,12 @@ const logOut = async (req, res) => {
     if (err) {
       res.status(500).json({ error: "logout failed" });
     }
-    res.redirect(process.env.FRONTEND_URL);
+    req.session.destroy((err) => {
+      if (err) {
+        res.status(500).json({ error: "fail to destroy session" });
+      }
+      res.redirect(process.env.FRONTEND_URL);
+    });
   });
 };
 
