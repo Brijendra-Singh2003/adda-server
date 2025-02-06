@@ -12,6 +12,10 @@ function createWSS(server) {
   };
 
   const clients = new Map();
+  const room_wise_clients = {
+    table: new Map(),
+    fountain: new Map(),
+  };
   const chats = {
     table: [
       { id: 1, text: "Hello! How can I help you today?", sender: "chintu" },
@@ -37,7 +41,7 @@ function createWSS(server) {
   wss.on("connection", (socket) => {
     const id = count++;
     let myUsername;
-
+    let myRoom;
     console.log(`device ${id} connected.`, room);
     socket.send(JSON.stringify({ type: "messages", data: chats }));
 
@@ -69,17 +73,21 @@ function createWSS(server) {
           map[currRoom].add(socket);
           console.log(prevMessage);
           socket.send(
-            JSON.stringify({ type: "messages", data: chats[currRoom] })
+            JSON.stringify({
+              type: "messages",
+              data: chats[currRoom],
+              notify: false,
+            })
           );
           break;
         case "exit":
           currRoom = message.data.room;
           console.log("exit from  in ", message);
+          room_wise_clients[currRoom].delete(socket);
           map[currRoom].delete(socket);
-
           console.log(myUsername);
-          Array.from(clients.keys()).forEach((clientId) => {
-            clients
+          Array.from(room_wise_clients[currRoom].keys()).forEach((clientId) => {
+            room_wise_clients[currRoom]
               .get(clientId)
               .send(JSON.stringify({ type: "exitRoom", data: myUsername }));
           });
@@ -116,39 +124,53 @@ function createWSS(server) {
           // });
           break;
         case "join":
-          const users = room.map((e) => e.username);
-          console.log("users are", users);
+          {
+            const room = message.room;
+            myRoom = room;
+            console.log("enter in room", room);
+            const users = Array.from(room_wise_clients[room].keys());
+            console.log("users are", users);
 
-          socket.send(
-            JSON.stringify({
-              type: "clients",
-              data: Array.from(clients.keys()) || [],
-            })
-          );
-          clients.set(myUsername, socket);
-          console.log(clients.keys());
-          break;
-        case "offer":
-          // console.log(message);
-          const receiver = clients.get(message.receiverId);
-          console.log(
-            `recieving offer from ${myUsername} to ${message.receiverId}`
-          );
-          if (receiver) {
-            receiver.send(
+            socket.send(
               JSON.stringify({
-                type: "offer",
-                data: message.data,
-                senderId: myUsername,
+                type: "clients",
+                data: Array.from(room_wise_clients[room].keys()) || [],
               })
             );
-          } else {
-            console.error(`Receiver ${receiver} not found`);
+            room_wise_clients[room].set(myUsername, socket);
+            console.log(room_wise_clients[room].keys());
+          }
+          break;
+        case "offer":
+          // console.log(message);{
+          {
+            const room = message.room;
+            const receiver = room_wise_clients[room].get(message.receiverId);
+            console.log(
+              `recieving offer from ${myUsername} to ${message.receiverId}`
+            );
+            if (receiver) {
+              receiver.send(
+                JSON.stringify({
+                  type: "offer",
+                  data: message.data,
+                  senderId: myUsername,
+                })
+              );
+            } else {
+              console.error(`Receiver ${receiver} not found`);
+            }
           }
           break;
         case "answer": {
-          const receiver = clients.get(message.receiverId);
-          console.log("answer recieve ", message.receiverId);
+          const room = message.room;
+          const receiver = room_wise_clients[room].get(message.receiverId);
+          console.log(
+            "answer recieve ",
+            message.receiverId,
+            " in the room ",
+            room
+          );
           if (receiver) {
             receiver.send(
               JSON.stringify({
@@ -164,7 +186,7 @@ function createWSS(server) {
         }
 
         default: {
-          const receiver = clients.get(message.receiverId);
+          const receiver = room_wise_clients[myRoom].get(message.receiverId);
 
           receiver.send(
             JSON.stringify({
