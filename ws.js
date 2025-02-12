@@ -83,9 +83,13 @@ function createWSS(server) {
         case "exit":
           currRoom = message.data.room;
           console.log("exit from  in ", message);
-          room_wise_clients[currRoom].delete(socket);
+          room_wise_clients[currRoom].delete(myUsername);
           map[currRoom].delete(socket);
           console.log(myUsername);
+          console.log(
+            "remaining user in that room ",
+            room_wise_clients[currRoom].keys()
+          );
           Array.from(room_wise_clients[currRoom].keys()).forEach((clientId) => {
             room_wise_clients[currRoom]
               .get(clientId)
@@ -187,14 +191,16 @@ function createWSS(server) {
 
         default: {
           const receiver = room_wise_clients[myRoom].get(message.receiverId);
+          if (receiver) {
+            receiver.send(
+              JSON.stringify({
+                type: message.type,
+                data: message.data,
+                senderId: myUsername,
+              })
+            );
+          }
 
-          receiver.send(
-            JSON.stringify({
-              type: message.type,
-              data: message.data,
-              senderId: myUsername,
-            })
-          );
           break;
         }
       }
