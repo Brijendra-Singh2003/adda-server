@@ -42,8 +42,6 @@ function createWSS(server) {
     const id = count++;
     let myUsername;
     let myRoom;
-    console.log(`device ${id} connected.`, room);
-    socket.send(JSON.stringify({ type: "messages", data: chats }));
 
     socket.on("message", (data, isBinary) => {
       const message = JSON.parse(data.toString());
@@ -80,6 +78,7 @@ function createWSS(server) {
             })
           );
           break;
+
         case "exit":
           currRoom = message.data.room;
           console.log("exit from  in ", message);
@@ -127,6 +126,7 @@ function createWSS(server) {
           //   );
           // });
           break;
+
         case "join":
           {
             const room = message.room;
@@ -145,8 +145,8 @@ function createWSS(server) {
             console.log(room_wise_clients[room].keys());
           }
           break;
+
         case "offer":
-          // console.log(message);{
           {
             const room = message.room;
             const receiver = room_wise_clients[room].get(message.receiverId);
@@ -166,6 +166,7 @@ function createWSS(server) {
             }
           }
           break;
+
         case "answer": {
           const room = message.room;
           const receiver = room_wise_clients[room].get(message.receiverId);
@@ -230,6 +231,9 @@ function createWSS(server) {
         }
       }
     });
+
+    console.log(`device ${id} connected.`);
+    socket.send(JSON.stringify({ type: "messages", data: chats }));
   });
 
   setInterval(() => {
