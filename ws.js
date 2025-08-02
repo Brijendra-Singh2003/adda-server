@@ -1,4 +1,5 @@
 const ws = require("ws");
+const { pub, sub } = require("./redis");
 
 function createWSS(server) {
   const wss = new ws.Server({ server });
@@ -42,8 +43,21 @@ function createWSS(server) {
     const id = count++;
     let myUsername;
     let myRoom;
+    sub.subscribe("chat_messages");
 
-    socket.on("message", (data, isBinary) => {
+  sub.on("message", (channel, message) => {
+    if (channel === "chat_messages") {
+      const parsed = JSON.parse(message);
+      const { room, chats } = parsed;
+
+      for (const client of map[room]) {
+        client.send(JSON.stringify({ type: "messages", data: chats }));
+      }
+    }
+  });
+
+
+    socket.on("message", async (data, isBinary) => {
       const message = JSON.parse(data.toString());
 
       switch (message.type) {
@@ -100,7 +114,7 @@ function createWSS(server) {
 
         case "messages":
           currRoom = message.data.room;
-
+          
           console.log("chats", chats, currRoom);
 
           chats[currRoom].push({
@@ -117,9 +131,17 @@ function createWSS(server) {
           socket.send(
             JSON.stringify({ type: "messages", data: chats[currRoom] })
           );
-          for (const x of map[currRoom]) {
-            x.send(JSON.stringify({ type: "messages", data: chats[currRoom] }));
-          }
+          // for (const x of map[currRoom]) {
+          //   x.send(JSON.stringify({ type: "messages", data: chats[currRoom] }));
+          // }
+          // replace the above part 
+          await pub.publish(
+            "chat_messages",
+            JSON.stringify({
+              room: currRoom,
+              chats: chats[currRoom],
+            })
+          );
           // wss.clients.forEach((client) => {
           //   client.send(
           //     JSON.stringify({ type: "messages", data: chats[currRoom] })
