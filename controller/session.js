@@ -10,6 +10,7 @@ const sessionMiddleware = session({
     secure: false,
     maxAge: 24 * 60 * 60 * 1000,
     httpOnly: true,
+    sameSite: "lax",
   },
   store: MongoStore.create({
     mongoUrl: process.env.DATABASE_URL,
