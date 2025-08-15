@@ -1,4 +1,4 @@
-const logIn = async (req, res) => {
+const login = async (req, res) => {
   res.redirect(process.env.FRONTEND_URL);
 };
 
@@ -10,7 +10,7 @@ const checkSession = async (req, res) => {
   }
 };
 
-const logOut = async (req, res) => {
+const logout = async (req, res) => {
   req.logOut((err) => {
     if (err) {
       res.status(500).json({ error: "logout failed" });
@@ -24,4 +24,4 @@ const logOut = async (req, res) => {
   });
 };
 
-module.exports = { checkSession, logOut, logIn };
+module.exports = { checkSession, logout, login };

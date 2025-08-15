@@ -1,5 +1,4 @@
 require("dotenv").config();
-const path = require("path");
 const cors = require("cors");
 const http = require("http");
 const express = require("express");
@@ -31,14 +30,6 @@ app.use(express.json());
 
 // Routes
 app.use("/auth", AuthRouter);
-
-
-
-// to server client side build files
-app.use(express.static(path.join(process.cwd(), "..", "client/dist")));
-app.get("*", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "..", "client/dist/index.html"));
-});
 
 
 async function main() {
