@@ -12,6 +12,7 @@ const googleStrategy = new Strategy(
   async function (accessToken, refreshToken, profile, done) {
     try {
       count++;
+      console.log("finding user");
       let user = await User.findOne({ googleId: profile.id });
       if (!user) {
         user = await User.create({
@@ -33,11 +34,13 @@ const googleStrategy = new Strategy(
 passport.use(googleStrategy);
 
 passport.serializeUser((user, done) => {
+  console.log("Serializing user:", user.id);
   done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
   try {
+    console.log("Deserializing user:", id);
     const user = await User.findById(id);
     done(null, user);
   } catch (err) {

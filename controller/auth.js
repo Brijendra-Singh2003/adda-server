@@ -1,8 +1,11 @@
 const logIn = async (req, res) => {
+    console.log("Callback complete, user is:", req.user);
   res.redirect(process.env.FRONTEND_URL);
 };
 
 const checkSession = async (req, res) => {
+  
+  console.log("req -",req.user);
   if (req.isAuthenticated()) {
     res.json({ user: req.user });
   } else {

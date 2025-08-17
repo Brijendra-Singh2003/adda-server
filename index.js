@@ -14,6 +14,7 @@ const sessionMiddleware = require("./controller/session");
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const PORT = process.env.PORT || 3000;
 const app = express();
+app.set("trust proxy", 1);
 
 const corsOptions = {
   origin: FRONTEND_URL,
