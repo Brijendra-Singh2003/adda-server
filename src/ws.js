@@ -1,5 +1,5 @@
 const ws = require("ws");
-const { pub, sub } = require("./redis");
+const { pub, sub } = require("./configuration/redis");
 
 function createWSS(server) {
   const wss = new ws.Server({ server });
