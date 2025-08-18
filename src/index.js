@@ -6,6 +6,7 @@ const passport = require("./configuration/passport");
 
 const { createWSS } = require("./ws");
 const AuthRouter = require("./routes/auth");
+const worldRouter = require("./routes/world");
 const connectDb = require("./configuration/db");
 const sessionMiddleware = require("./controller/session");
 
@@ -31,6 +32,7 @@ app.use(express.json());
 
 // Routes
 app.use("/auth", AuthRouter);
+app.use("/world",worldRouter)
 
 
 async function main() {
