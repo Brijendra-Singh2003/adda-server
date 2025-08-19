@@ -1,7 +1,7 @@
 // session.js
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
-const { isProduction } = require("../utils/constants");
+const { isProduction } = require("../lib/constants");
 
 const sessionMiddleware = session({
   secret: "123",

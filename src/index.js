@@ -8,7 +8,7 @@ const { createWSS } = require("./ws");
 const AuthRouter = require("./routes/auth");
 const worldRouter = require("./routes/world");
 const connectDb = require("./configuration/db");
-const sessionMiddleware = require("./controller/session");
+const sessionMiddleware = require("./middlewares/session");
 
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";

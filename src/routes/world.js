@@ -1,9 +1,9 @@
 const express = require("express");
-const {create_world} = require("../controller/create_world");
-const {delete_world} = require("../controller/create_world");
+const {create_world, get_worlds, delete_world} = require("../controller/world");
 const worldRouter = express.Router();
 
-worldRouter.post("/createWorld",create_world);
-worldRouter.delete("/DeleteWorld/:worldId",delete_world);
+worldRouter.get("/", get_worlds);
+worldRouter.post("/",create_world);
+worldRouter.delete("/:worldId",delete_world);
 
 module.exports = worldRouter;
