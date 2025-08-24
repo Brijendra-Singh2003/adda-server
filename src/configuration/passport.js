@@ -1,8 +1,9 @@
 const passport = require("passport");
 const User = require("../model/user.model");
 const { Strategy } = require("passport-google-oauth20");
-let count = 0;
+
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3000";
+
 const googleStrategy = new Strategy(
   {
     clientID: process.env.CLIENT_ID,
@@ -11,18 +12,17 @@ const googleStrategy = new Strategy(
   },
   async function (accessToken, refreshToken, profile, done) {
     try {
-      count++;
-      console.log("finding user");
-      let user = await User.findOne({ googleId: profile.id });
+      let user = await User.findOneAndUpdate({ googleId: profile.id }, {
+        name: profile.displayName,
+      }); // TODO: Remove update part when everyones names are updated.
+
       if (!user) {
         user = await User.create({
           googleId: profile.id,
           name: profile.displayName,
-          name: count,
           email: profile.emails[0].value,
         });
       }
-      console.log("user is ", user);
 
       return done(null, user);
     } catch (err) {
