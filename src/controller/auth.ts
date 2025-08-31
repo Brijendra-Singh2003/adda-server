@@ -25,5 +25,3 @@ export const logout = async (req: any, res: any) => {
     });
   });
 };
-
-module.exports = { checkSession, logout, login };

@@ -1,31 +1,33 @@
-import { asyncHandler } from "../lib/utils";
+import { RequestHandler } from "express";
+import { HTTPError } from "../middlewares/errorHandler";
 import World from "../model/world.model";
+import { User } from "../types/user";
 
-export const get_worlds = asyncHandler(async (req: any, res: any) => {
+export const get_worlds: RequestHandler = async (req, res) => {
     if (!req.isAuthenticated()) {
-        return res.status(401).json({ error: "please login." });
+        throw new HTTPError(401, "Please login.");
     }
 
-    const userId = req?.user?._id;
+    const userId = (req.user as User)?._id;
     if (!userId) {
-        return res.status(400).json({ error: "user info is not available, login again" });
+        throw new HTTPError(400, "user info is not available, login again");
     }
 
     const worlds = await World.find({ owner: userId });
 
     res.json(worlds);
-});
+};
 
-export const create_world = asyncHandler(async (req: any, res: any) => {
+export const create_world: RequestHandler = async (req, res) => {
     const { name } = req.body;
 
     if (!req.isAuthenticated()) {
-        return res.status(401).json({ error: "please login." });
+        throw new HTTPError(401, "Please login.")
     }
-
-    const userId = String(req?.user?._id);
+    
+    const userId = String((req?.user as User)?._id);
     if (!userId) {
-        return res.status(400).json({ error: "user info is not available, login again" });
+        throw new HTTPError(400, "user info is not available, login again")
     }
 
     const newWorld = new World({
@@ -39,9 +41,9 @@ export const create_world = asyncHandler(async (req: any, res: any) => {
         message: "succesfully created world!",
         world: saveWorld,
     });
-})
+};
 
-export const delete_world = asyncHandler(async (req: any, res: any) => {
+export const delete_world: RequestHandler = async (req, res) => {
     if (!req.isAuthenticated()) {
         return res.status(401).json({ error: "Login required" });
     }
@@ -52,7 +54,7 @@ export const delete_world = asyncHandler(async (req: any, res: any) => {
         return res.status(404).json({ error: "World not found" });
     }
 
-    const isOwner = String(world.owner) === String(req.user._id);
+    const isOwner = String(world.owner) === String((req.user as User)._id);
     if (!isOwner) {
         return res.status(403).json({ error: "you are not the owner of this world" });
     }
@@ -63,6 +65,4 @@ export const delete_world = asyncHandler(async (req: any, res: any) => {
         success: true,
         message: "world deleted succesfully !"
     });
-})
-
-module.exports = { get_worlds, create_world, delete_world };
+};
