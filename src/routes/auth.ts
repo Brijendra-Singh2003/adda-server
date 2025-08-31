@@ -1,6 +1,6 @@
-const express = require("express");
-const passport = require("../configuration/passport");
-const { checkSession, logout, login } = require("../controller/auth");
+import express from "express";
+import passport from "../configuration/passport";
+import { checkSession, logout, login } from "../controller/auth";
 
 const AuthRouter = express.Router();
 
@@ -9,4 +9,4 @@ AuthRouter.get("/google/callback", passport.authenticate("google", { failureRedi
 AuthRouter.get("/check-session", checkSession);
 AuthRouter.get("/logout", logout);
 
-module.exports = AuthRouter;
+export default AuthRouter;

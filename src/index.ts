@@ -1,14 +1,14 @@
-require("dotenv").config();
-const cors = require("cors");
-const http = require("http");
-const express = require("express");
-const passport = require("./configuration/passport");
 
-const { createWSS } = require("./ws");
-const AuthRouter = require("./routes/auth");
-const worldRouter = require("./routes/world");
-const connectDb = require("./configuration/db");
-const sessionMiddleware = require("./middlewares/session");
+import "dotenv/config";
+import cors from "cors";
+import http from "http";
+import express from "express";
+import passport from "./configuration/passport";
+import { createWSS } from "./ws";
+import AuthRouter from "./routes/auth";
+import worldRouter from "./routes/world";
+import connectDb from "./configuration/db";
+import sessionMiddleware from "./middlewares/session";
 
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
@@ -34,6 +34,9 @@ app.use(express.json());
 app.use("/auth", AuthRouter);
 app.use("/world",worldRouter)
 
+app.get("/", (req, res) => {
+  res.send("Hello!, from our base.");
+});
 
 async function main() {
   await connectDb();

@@ -1,8 +1,9 @@
-const mongoose = require("mongoose");
+
+import mongoose from "mongoose";
 
 const dbUrl = String(process.env.DATABASE_URL);
 
-const connectDb = async () => {
+const connectDb = async (): Promise<void> => {
   console.log("connecting to db /...");
   console.log(dbUrl);
   try {
@@ -14,4 +15,4 @@ const connectDb = async () => {
   console.log("Database connected ✌");
 };
 
-module.exports = connectDb;
+export default connectDb;

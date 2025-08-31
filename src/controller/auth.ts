@@ -1,8 +1,8 @@
-const login = async (req, res) => {
+export const login = async (req: any, res: any) => {
   res.redirect(process.env.FRONTEND_URL);
 };
 
-const checkSession = async (req, res) => {
+export const checkSession = async (req: any, res: any) => {
   
   console.log("req -",req.user);
   if (req.isAuthenticated()) {
@@ -12,12 +12,12 @@ const checkSession = async (req, res) => {
   }
 };
 
-const logout = async (req, res) => {
-  req.logOut((err) => {
+export const logout = async (req: any, res: any) => {
+  req.logOut((err: unknown) => {
     if (err) {
       res.status(500).json({ error: "logout failed" });
     }
-    req.session.destroy((err) => {
+    req.session.destroy((err: unknown) => {
       if (err) {
         res.status(500).json({ error: "fail to destroy session" });
       }

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const worldSchema = new mongoose.Schema({
   name: {
@@ -17,4 +17,4 @@ const worldSchema = new mongoose.Schema({
 });
 
 const World = mongoose.model("World", worldSchema);
-module.exports = World;
+export default World;

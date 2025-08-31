@@ -15,6 +15,9 @@ COPY . .
 
 # Expose port (change if your app uses a different one)
 EXPOSE 3000
+ 
+# Build TypeScript
+RUN npm run build
 
-# Start the app
-CMD ["node", "src/index.js"]
+# Start the app from dist
+CMD ["node", "dist/index.js"]

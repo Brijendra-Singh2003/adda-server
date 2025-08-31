@@ -1,7 +1,8 @@
 // session.js
-const session = require("express-session");
-const MongoStore = require("connect-mongo");
-const { isProduction } = require("../lib/constants");
+
+import session from "express-session";
+import MongoStore from "connect-mongo";
+import { isProduction } from "../lib/constants";
 
 const sessionMiddleware = session({
   secret: "123",
@@ -18,4 +19,4 @@ const sessionMiddleware = session({
   }),
 });
 
-module.exports = sessionMiddleware;
+export default sessionMiddleware;

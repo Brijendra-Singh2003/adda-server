@@ -1,7 +1,7 @@
-const { asyncHandler } = require("../lib/utils");
-const World = require("../model/world.model");
+import { asyncHandler } from "../lib/utils";
+import World from "../model/world.model";
 
-const get_worlds = asyncHandler(async (req, res) => {
+export const get_worlds = asyncHandler(async (req: any, res: any) => {
     if (!req.isAuthenticated()) {
         return res.status(401).json({ error: "please login." });
     }
@@ -16,7 +16,7 @@ const get_worlds = asyncHandler(async (req, res) => {
     res.json(worlds);
 });
 
-const create_world = asyncHandler(async (req, res) => {
+export const create_world = asyncHandler(async (req: any, res: any) => {
     const { name } = req.body;
 
     if (!req.isAuthenticated()) {
@@ -41,7 +41,7 @@ const create_world = asyncHandler(async (req, res) => {
     });
 })
 
-const delete_world = asyncHandler(async (req, res) => {
+export const delete_world = asyncHandler(async (req: any, res: any) => {
     if (!req.isAuthenticated()) {
         return res.status(401).json({ error: "Login required" });
     }
