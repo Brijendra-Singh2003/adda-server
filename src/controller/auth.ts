@@ -3,8 +3,6 @@ export const login = async (req: any, res: any) => {
 };
 
 export const checkSession = async (req: any, res: any) => {
-  
-  console.log("req -",req.user);
   if (req.isAuthenticated()) {
     res.json({ user: req.user });
   } else {
