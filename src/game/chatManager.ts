@@ -1,9 +1,6 @@
 import { EventEmitter } from 'events';
 import WebSocket from "ws";
-
-interface Wss extends WebSocket.Server {
-    clients: Set<WebSocket>;
-}
+import { Wss } from '../ws';
 
 class ChatManager {
     private wss: Wss;
@@ -16,7 +13,7 @@ class ChatManager {
         this.eventBus.on('chatMessage', this.handleChatMessage.bind(this));
     }
 
-    onPlayerConnected(ws: WebSocket, id: string) {
+    onPlayerConnected(ws: WebSocket) {
         ws.send(JSON.stringify({
             type: 'chatMessage',
             data: {
