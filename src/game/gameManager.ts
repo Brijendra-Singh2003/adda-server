@@ -110,16 +110,27 @@ export class GameManager {
     // TODO: use room
     private broadcastUpdates() {
         // Check if there are any pending updates
-        const updates = Object.values(this.pendingUpdates);
-        if (updates.length > 0) {
-            this.wss.clients.forEach(client => {
+        // const updates = Object.values(this.pendingUpdates);
+
+        // if (updates.length > 0) {
+        //     this.wss.clients.forEach(client => {
+        //         if (client.readyState === WebSocket.OPEN) {
+        //             client.send(JSON.stringify({ type: 'playerUpdates', data: updates }));
+        //         }
+        //     });
+        //     // Clear the updates after broadcasting
+        //     this.pendingUpdates = {};
+        // }
+        this.rooms.forEach((room,name)=>{
+            const updates = Object.values(room.pendingUpdates);
+            room.clients.forEach((client)=>{
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(JSON.stringify({ type: 'playerUpdates', data: updates }));
                 }
-            });
-            // Clear the updates after broadcasting
-            this.pendingUpdates = {};
-        }
+            })
+            room.pendingUpdates = {};
+        })
+        
     }
 
     public destroy() {
