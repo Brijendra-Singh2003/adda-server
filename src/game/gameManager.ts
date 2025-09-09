@@ -9,7 +9,7 @@ interface Player {
     y: number;
 }
 
-interface Room {
+interface World {
     players: Record<string, Player>;
     pendingUpdates: Record<string, Player>;
     clients: Set<Ws>;
@@ -18,7 +18,7 @@ interface Room {
 export class GameManager {
     private wss: Wss;
     private eventBus: EventEmitter;
-    private rooms: Map<string, Room> = new Map();
+    private worlds: Map<string, World> = new Map();
     private pendingUpdates: Record<string, Player> = {};
     private updateInterval: NodeJS.Timeout;
 
@@ -37,29 +37,29 @@ export class GameManager {
     public onPlayerConnected(ws: Ws) {
         const playerId = ws.playerId;
         const playerName = ws.playerName;
-        const roomId = ws.roomId;
+        const worldId = ws.worldId;
 
-        let room = this.rooms.get(roomId);
-        if (!room) {
-            room = { players: {}, pendingUpdates: {}, clients: new Set() };
-            this.rooms.set(roomId, room);
+        let world = this.worlds.get(worldId);
+        if (!world) {
+            world = { players: {}, pendingUpdates: {}, clients: new Set() };
+            this.worlds.set(worldId, world);
         }
 
-        room.clients.add(ws);
-        room.players[playerId] = {
+        world.clients.add(ws);
+        world.players[playerId] = {
             id: playerId,
             name: playerName,
             x: Math.floor(Math.random() * 700) + 50,
             y: Math.floor(Math.random() * 500) + 50,
         };
 
-        ws.send(JSON.stringify({ type: 'currentPlayers', data: Object.values(room.players) }));
+        ws.send(JSON.stringify({ type: 'currentPlayers', data: Object.values(world.players) }));
 
-        room.clients.forEach(client => {
+        world.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN && client !== ws) {
                 client.send(JSON.stringify({
                     type: 'playerConnect',
-                    data: room.players[playerId]
+                    data: world.players[playerId]
                 }));
             }
         });
@@ -68,46 +68,46 @@ export class GameManager {
 
     public handlePlayerMovement(ws: Ws, movementData: { x: number; y: number }) {
         const playerId = ws.playerId;
-        let room = this.rooms.get(ws.roomId);
+        let world = this.worlds.get(ws.worldId);
 
-        if (!room) {
-            console.error("No room found with id", ws.roomId);
+        if (!world) {
+            console.error("No world found with id", ws.worldId);
             return;
         }
 
         // Update the player's position in the main state
-        if (room.players[playerId]) {
-            room.players[playerId].x = movementData.x;
-            room.players[playerId].y = movementData.y;
+        if (world.players[playerId]) {
+            world.players[playerId].x = movementData.x;
+            world.players[playerId].y = movementData.y;
 
             // Add the updated player to the pending updates object
-            room.pendingUpdates[playerId] = room.players[playerId];
+            world.pendingUpdates[playerId] = world.players[playerId];
         }
     }
 
     public handlePlayerDisconnect(ws: Ws) {
         const playerId = ws.playerId;
-        const room = this.rooms.get(ws.roomId);
+        const world = this.worlds.get(ws.worldId);
 
-        if (!room) {
-            console.error("No room found with id", ws.roomId);
+        if (!world) {
+            console.error("No world found with id", ws.worldId);
             return;
         }
         
         // Remove from pending updates if a disconnect happens
-        delete room.players[playerId];
-        delete room.pendingUpdates[playerId];
-        room.clients.delete(ws);
+        delete world.players[playerId];
+        delete world.pendingUpdates[playerId];
+        world.clients.delete(ws);
 
         // Tell clients to remove this player
-        room.clients.forEach(client => {
+        world.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify({ type: 'disconnect', data: playerId }));
             }
         });
     }
 
-    // TODO: use room
+    // TODO: use world
     private broadcastUpdates() {
         // Check if there are any pending updates
         // const updates = Object.values(this.pendingUpdates);
@@ -121,14 +121,14 @@ export class GameManager {
         //     // Clear the updates after broadcasting
         //     this.pendingUpdates = {};
         // }
-        this.rooms.forEach((room,name)=>{
-            const updates = Object.values(room.pendingUpdates);
-            room.clients.forEach((client)=>{
+        this.worlds.forEach((world,name)=>{
+            const updates = Object.values(world.pendingUpdates);
+            world.clients.forEach((client)=>{
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(JSON.stringify({ type: 'playerUpdates', data: updates }));
                 }
             })
-            room.pendingUpdates = {};
+            world.pendingUpdates = {};
         })
         
     }
