@@ -24,10 +24,14 @@ jobs:
           push: true
           tags: docker.io/${{ secrets.DOCKER_USERNAME }}/adda:${{ github.sha }}
 
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: adda
           slot-name: production
-          publish-profile: ${{ secrets.AZURE_CREDENTIALS }}
           images: docker.io/${{ secrets.DOCKER_USERNAME }}/adda:${{ github.sha }}
