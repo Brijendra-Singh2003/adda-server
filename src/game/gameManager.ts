@@ -1,139 +1,20 @@
 import { EventEmitter } from "events";
-import WebSocket from "ws";
-import { Ws, Wss } from "../ws";
+import { Ws } from "../ws";
+import World from "./World";
 
-interface Player {
+export interface Player {
   id: string;
   name: string;
   x: number;
   y: number;
 }
-class Room {
-  public id: string;
-  private players: Set<Ws>;
-  constructor(roomId: string) {
-    this.id = roomId;
-    this.players = new Set();
-  }
 
-  public onPlayerEnter(newPlayer: Ws) {
-    this.players.add(newPlayer);
-  }
-
-  public onMessage(sender: Ws, message: string) {
-    this.players.forEach((player) => {
-      if (player.OPEN && player != sender) {
-        player.send(
-          JSON.stringify({
-            type: "chatMessage",
-            data: {
-              userName: sender.playerName,
-              message: message,
-            },
-          })
-        );
-      }
-    });
-  }
-
-  public onPlayerExit(player: Ws) {
-    this.players.delete(player);
-  }
-}
-
-class World {
-  private worldId: string;
-  private players: Record<string, Player>;
-  private pendingUpdates: Record<string, Player>;
-  private clients: Set<Ws>;
-  private rooms: Map<string, Room>;
-  constructor(id: string) {
-    this.worldId = id;
-    this.players = {};
-    this.pendingUpdates = {};
-    this.clients = new Set();
-    this.rooms = new Map();
-    // temporary creating three room
-    const room1 = new Room("1");
-    const room2 = new Room("2");
-    const room3 = new Room("3");
-    this.rooms.set(room1.id, room1);
-    this.rooms.set(room2.id, room2);
-    this.rooms.set(room3.id, room3);
-  }
-
-  public onPlayerEnter(player: Ws) {
-    this.clients.add(player);
-    const newPlayer: Player = {
-      id: player.playerId,
-      name: player.playerName,
-      x: 100,
-      y: 100,
-    };
-
-    // notify this player
-    this.players[player.playerId] = newPlayer;
-    player.send(
-      JSON.stringify({
-        type: "currentPlayers",
-        data: Object.values(this.players),
-      })
-    );
-
-    // notify other players
-    const message = JSON.stringify({
-      type: "playerConnect",
-      data: this.players[player.playerId],
-    });
-    this.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN && client !== player) {
-        client.send(message);
-      }
-    });
-  }
-
-  public onPlayerMove(playerId: string, x: number, y: number) {
-    this.players[playerId].x = x;
-    this.players[playerId].y = y;
-    this.pendingUpdates[playerId] = this.players[playerId];
-  }
-
-  public removePlayer(player: Ws) {
-    const playerId = player.playerId;
-    delete this.players[playerId];
-    delete this.pendingUpdates[playerId];
-    this.clients.delete(player);
-
-    // also removing from the all of the different players that are present there
-    const data = JSON.stringify({ type: "disconnect", data: playerId });
-    this.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(data);
-      }
-    });
-  }
-
-  public broadCastUpdate() {
-    const updates = JSON.stringify({
-      type: "playerUpdates",
-      data: Object.values(this.pendingUpdates),
-    });
-    this.clients.forEach((player) => {
-      player.send(updates);
-    });
-    this.pendingUpdates = {};
-  }
-}
-
-export class GameManager {
-  private wss: Wss;
+export default class GameManager {
   private eventBus: EventEmitter;
   private worlds: Map<string, World> = new Map();
-  private pendingUpdates: Record<string, Player> = {};
   private updateInterval: NodeJS.Timeout;
 
-  constructor(wss: Wss, eventBus: EventEmitter) {
-    this.wss = wss;
+  constructor(eventBus: EventEmitter) {
     this.eventBus = eventBus;
 
     // Listen for specific message types on the event bus
@@ -143,8 +24,34 @@ export class GameManager {
       this.handlePlayerDisconnect.bind(this)
     );
 
-    // Start the game loop to send updates at a fixed rate.
+    this.eventBus.on(
+      "enterRoom",
+      this.hanldlePlayerEnterRoomForWorld.bind(this)
+    );
+
+    this.eventBus.on("messageInRoom", this.handleMessageInRoom.bind(this));
+    this.eventBus.on("exitRoom", this.hanldlePlayerExitRoomForWorld.bind(this));
+
     this.updateInterval = setInterval(() => this.broadcastUpdates(), 1000 / 12);
+  }
+
+  private handleMessageInRoom(ws: Ws, data: { roomId: string; text: string }) {
+    const worldId = ws.worldId;
+    const world = this.worlds.get(worldId);
+    console.log(world);
+    world?.playerMessageInRoom(ws, data);
+  }
+
+  private hanldlePlayerEnterRoomForWorld(ws: Ws, data: { roomId: string }) {
+    const worldId = ws.worldId;
+    const world = this.worlds.get(worldId);
+    world?.handleEnterinRoom(ws, data);
+  }
+
+  private hanldlePlayerExitRoomForWorld(ws: Ws, data: { roomId: string }) {
+    const worldId = ws.worldId;
+    const world = this.worlds.get(worldId);
+    world?.handleExitinRoom(ws, data);
   }
 
   public onPlayerConnected(ws: Ws) {
@@ -152,7 +59,7 @@ export class GameManager {
     let world = this.worlds.get(worldId);
 
     if (!world) {
-      world = new World(worldId);
+      world = new World();
       this.worlds.set(worldId, world);
     }
 
@@ -168,15 +75,7 @@ export class GameManager {
       return;
     }
 
-    // Update the player's position in the main state
     world.onPlayerMove(ws.playerId, movementData.x, movementData.y);
-    // if (world.players[playerId]) {
-    //   world.players[playerId].x = movementData.x;
-    //   world.players[playerId].y = movementData.y;
-
-    //   // Add the updated player to the pending updates object
-    //   world.pendingUpdates[playerId] = world.players[playerId];
-    // }
   }
 
   public handlePlayerDisconnect(ws: Ws) {
@@ -194,22 +93,9 @@ export class GameManager {
 
   // TODO: use world
   private broadcastUpdates() {
-    // Check if there are any pending updates
-    // const updates = Object.values(this.pendingUpdates);
-
-    // if (updates.length > 0) {
-    //     this.wss.clients.forEach(client => {
-    //         if (client.readyState === WebSocket.OPEN) {
-    //             client.send(JSON.stringify({ type: 'playerUpdates', data: updates }));
-    //         }
-    //     });
-    //     // Clear the updates after broadcasting
-    //     this.pendingUpdates = {};
-    // }
     this.worlds.forEach((world, name) => {
       world.broadCastUpdate();
     });
-    ``;
   }
 
   public destroy() {
